@@ -1,26 +1,32 @@
-name: Check Dune Tickets
+name: Dune 3 Ticket Monitor
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch: # Allows you to run it manually to test
+    - cron: '*/10 * * * *' 
+  workflow_dispatch: # This adds a "Run workflow" button in GitHub so you can test it manually!
 
 jobs:
-  check_tickets:
+  check-seats:
     runs-on: ubuntu-latest
+    
+    # Prevents the action from hanging forever if Playwright gets permanently stuck
+    timeout-minutes: 5 
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
-
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run Ticket Bot
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          python-version: '3.10'
+          
+      - name: Install Python Dependencies
+        run: pip install requests playwright
+        
+      - name: Install Playwright Browsers (Chromium)
+      
+        run: playwright install --with-deps chromium
+        
+      - name: Run Scraper
         run: python main.py

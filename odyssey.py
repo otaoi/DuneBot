@@ -4,8 +4,8 @@ import re
 import sys
 import requests
 
-from dotenv import load_dotenv
-load_dotenv()
+#from dotenv import load_dotenv
+#load_dotenv()
 
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 CINEPLEX_SUB_KEY = os.environ.get("CINEPLEX_SUB_KEY")

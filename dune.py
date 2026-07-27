@@ -3,7 +3,6 @@ import os
 import re
 import sys
 import requests
-from playwright.sync_api import sync_playwright
 
 from dotenv import load_dotenv
 load_dotenv()

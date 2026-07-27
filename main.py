@@ -1,8 +1,9 @@
 import sys
 import time
 import requests
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 import os
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+
 
 # --- CONFIGURATION ---
 SCREENINGS = [

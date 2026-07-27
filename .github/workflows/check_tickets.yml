@@ -3,13 +3,11 @@ name: Dune 3 Ticket Monitor
 on:
   schedule:
     - cron: '*/10 * * * *' 
-  workflow_dispatch: # This adds a "Run workflow" button in GitHub so you can test it manually!
+  workflow_dispatch: 
 
 jobs:
   check-seats:
     runs-on: ubuntu-latest
-    
-    # Prevents the action from hanging forever if Playwright gets permanently stuck
     timeout-minutes: 5 
     
     steps:
@@ -19,15 +17,33 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12.3'
+          
+      - name: Cache Pip Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip
           
       - name: Install Python Dependencies
         run: pip install requests playwright
         
-      - name: Install Playwright Browsers (Chromium)
-      
-        run: playwright install --with-deps chromium
-      
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright
+          
+      - name: Install Playwright System Dependencies
+        run: playwright install-deps
+        
+      - name: Install Playwright Browser (if not cached)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: playwright install chromium
+        
       - name: Run Scraper
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

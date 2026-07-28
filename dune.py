@@ -14,7 +14,7 @@ THEATRES = {
 }
 
 FILM_ID = "37998"  # Exact Dune film ID provided
-DAYS_AHEAD = 3    # 3 days till 19th
+DAYS_AHEAD = 2    # 2 days till 18th
 START_DATE = datetime(2026, 12, 17)  # Starting  on Dec 17, 2026
 
 # Dune Seat Rules

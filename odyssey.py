@@ -80,7 +80,7 @@ def fetch_showtimes():
                                                     })
                                                     print(f"  Found: {date_str} @ {pretty_time}")
                 elif res.status_code == 401:
-                    print("❌ HTTP 401: Invalid or missing Ocp-Apim-Subscription-Key!")
+                    print(" HTTP 401: Invalid or missing Ocp-Apim-Subscription-Key!")
                     break
             except Exception as err:
                 print(f" Failed to fetch showtimes for {date_str}: {err}")
@@ -124,7 +124,18 @@ def find_adjacent_seat_groups(available_seats_by_row):
 
 def analyze_screening_seats(showtime):
     """Fetches seat availability and dynamically maps backend rows to real letters."""
-    print(f"🎟️ Checking {showtime['theatre']} | {showtime['date']} @ {showtime['time']}...")
+    print(f"Checking {showtime['theatre']} | {showtime['date']} @ {showtime['time']}...")
+    
+    is_august_second = False
+    try:
+        parts = showtime['date'].split('/')
+        if len(parts) == 3 and int(parts[0]) == 8 and int(parts[1]) == 2 and int(parts[2]) == 2026:
+            is_august_second = True
+    except Exception:
+        pass
+
+    # Allow 1 contiguous seat for August 2nd, otherwise fallback to standard minimum requirement
+    min_seats = 1 if is_august_second else MIN_CONTIGUOUS_SEATS
     
     seat_api_url = f"https://apis.cineplex.com/prod/ticketing/api/v1/theatre/{showtime['theatre_id']}/showtime/{showtime['id']}/seat-availability" 
     
@@ -170,7 +181,7 @@ def analyze_screening_seats(showtime):
                             raw_seats[row_letter] = []
                         raw_seats[row_letter].append(seat_num)
                     
-        return find_adjacent_seat_groups(raw_seats)
+        return find_adjacent_seat_groups(raw_seats, min_seats)
         
     except Exception as e:
         print(f" Error parsing seat API: {e}")

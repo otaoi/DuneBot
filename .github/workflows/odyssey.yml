@@ -24,6 +24,6 @@ jobs:
 
       - name: Run Odyssey Monitor
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_WEBHOOKS: ${{ secrets.DISCORD_WEBHOOKS }}
           CINEPLEX_SUB_KEY: ${{ secrets.CINEPLEX_SUB_KEY }}
         run: python odyssey.py

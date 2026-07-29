@@ -21,7 +21,7 @@ THEATRES = {
 }
 
 FILM_ID = "37617"  # The Odyssey film ID
-DAYS_AHEAD = 14
+DAYS_AHEAD = 22
 
 # Seat Rules
 MIN_CONTIGUOUS_SEATS = 2

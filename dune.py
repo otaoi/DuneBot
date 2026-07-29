@@ -7,7 +7,12 @@ import requests
 #from dotenv import load_dotenv
 #load_dotenv()
 
-DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
+webhooks_raw = os.environ.get("DISCORD_WEBHOOKS", "")
+if not webhooks_raw:
+    single_hook = os.environ.get("DISCORD_WEBHOOK", "")
+    DISCORD_WEBHOOKS = [single_hook] if single_hook else []
+else:
+    DISCORD_WEBHOOKS = [url.strip() for url in webhooks_raw.split(",") if url.strip()]
 CINEPLEX_SUB_KEY = os.environ.get("CINEPLEX_SUB_KEY")
 THEATRES = {
     "1405": "Cineplex Cinemas Langley"
@@ -198,8 +203,8 @@ def analyze_screening_seats(showtime):
 
 def notify_discord(showtime, seat_groups):
     """Formats and posts alert message to Discord Webhook."""
-    if not DISCORD_WEBHOOK:
-        print(" DISCORD_WEBHOOK environment variable not set. Skipping ping.")
+    if not DISCORD_WEBHOOKS:
+        print("DISCORD_WEBHOOKS environment variable not set. Skipping ping.")
         return
 
     description_lines = []
@@ -248,8 +253,13 @@ def notify_discord(showtime, seat_groups):
         ]
     }
 
-    requests.post(DISCORD_WEBHOOK, json=payload)
-    print(f"Sent Discord alert for {showtime['date']} @ {showtime['time']}")
+    for webhook_url in DISCORD_WEBHOOKS:
+        try:
+            requests.post(webhook_url, json=payload, timeout=5)
+            print(f" Sent Discord alert to webhook for {showtime['date']} @ {showtime['time']}")
+        except Exception as e:
+            print(f" Failed to send to a webhook: {e}")
+
 
 
 

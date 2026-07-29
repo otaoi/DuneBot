@@ -96,7 +96,7 @@ def fetch_showtimes():
 
 
 
-def find_adjacent_seat_groups(available_seats_by_row):
+def find_adjacent_seat_groups(available_seats_by_row, min_required_seats=2):
     """Finds continuous blocks of seats in valid rows."""
     matched_groups = {}
 

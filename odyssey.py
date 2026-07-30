@@ -21,10 +21,10 @@ THEATRES = {
 }
 
 FILM_ID = "37617"  # The Odyssey film ID
-DAYS_AHEAD = 22
+DAYS_AHEAD = 4
 
 # Seat Rules
-MIN_CONTIGUOUS_SEATS = 2
+MIN_CONTIGUOUS_SEATS = 1
 BAD_ROWS = ["A", "B", "C", "D", "E"]
 
 

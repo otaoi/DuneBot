@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import requests
+import json
 
 #from dotenv import load_dotenv
 #load_dotenv()
@@ -29,6 +30,23 @@ BAD_ROWS = ["A", "B", "C", "D", "E"]
 
 
 
+def update_github_variable(repo, token, var_name, new_value):
+    """Updates a GitHub repository variable via the REST API."""
+    if not token or not repo:
+        return
+    url = f"https://api.github.com/repos/{repo}/actions/variables/{var_name}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+    try:
+        requests.patch(url, headers=headers, json={"name": var_name, "value": str(new_value)}, timeout=5)
+    except Exception as e:
+        print(f"Failed to update GitHub variable: {e}")
+
+
+
 def fetch_showtimes():
     """Fetches 70mm IMAX showtimes for The Odyssey across the next 14 days."""
     base_url = "https://apis.cineplex.com/prod/cpx/theatrical/api/v1/showtimes"
@@ -42,7 +60,7 @@ def fetch_showtimes():
     today = datetime.now()
 
     for location_id, theatre_name in THEATRES.items():
-        print(f"\n🔍 Searching 70mm IMAX showtimes for {theatre_name} (ID: {location_id})...")
+        print(f"\n Searching 70mm IMAX showtimes for {theatre_name} (ID: {location_id})...")
 
         for day_offset in range(DAYS_AHEAD):
             target_date = today + timedelta(days=day_offset)
@@ -86,7 +104,7 @@ def fetch_showtimes():
                                                     })
                                                     print(f"  Found: {date_str} @ {pretty_time}")
                 elif res.status_code == 401:
-                    print(" HTTP 401: Invalid or missing Ocp-Apim-Subscription-Key!")
+                    print("❌ HTTP 401: Invalid or missing Ocp-Apim-Subscription-Key!")
                     break
             except Exception as err:
                 print(f" Failed to fetch showtimes for {date_str}: {err}")
@@ -114,11 +132,11 @@ def find_adjacent_seat_groups(available_seats_by_row, min_required_seats=2):
             elif seat == current_group[-1] + 1:
                 current_group.append(seat)
             else:
-                if len(current_group) >= MIN_CONTIGUOUS_SEATS:
+                if len(current_group) >= min_required_seats:
                     row_groups.append(current_group)
                 current_group = [seat]
 
-        if len(current_group) >= MIN_CONTIGUOUS_SEATS:
+        if len(current_group) >= min_required_seats:
             row_groups.append(current_group)
 
         if row_groups:
@@ -130,7 +148,7 @@ def find_adjacent_seat_groups(available_seats_by_row, min_required_seats=2):
 
 def analyze_screening_seats(showtime):
     """Fetches seat availability and dynamically maps backend rows to real letters."""
-    print(f"Checking {showtime['theatre']} | {showtime['date']} @ {showtime['time']}...")
+    print(f"🎟️ Checking {showtime['theatre']} | {showtime['date']} @ {showtime['time']}...")
     
     is_august_second = False
     try:
@@ -196,11 +214,21 @@ def analyze_screening_seats(showtime):
 
 
 def notify_discord(showtime, seat_groups):
-    """Formats and posts alert message to Discord Webhook."""
+    """Deletes previous alerts and posts new ones across all configured webhooks."""
     if not DISCORD_WEBHOOKS:
         print("DISCORD_WEBHOOKS environment variable not set. Skipping ping.")
         return
         
+    gh_token = os.environ.get("GH_PAT")
+    repo_name = os.environ.get("GITHUB_REPOSITORY")
+    
+    # Load the dictionary of old message IDs
+    old_msg_ids_raw = os.environ.get("LAST_DISCORD_MSG_IDS", "{}")
+    try:
+        old_msg_ids = json.loads(old_msg_ids_raw)
+    except Exception:
+        old_msg_ids = {}
+
     description_lines = []
     total_spots = 0
 
@@ -246,12 +274,32 @@ def notify_discord(showtime, seat_groups):
         ]
     }
 
+    new_msg_ids = {}
+
     for webhook_url in DISCORD_WEBHOOKS:
         try:
-            requests.post(webhook_url, json=payload, timeout=5)
-            print(f" Sent Discord alert to webhook for {showtime['date']} @ {showtime['time']}")
+            # 1. Delete the previous message for this specific webhook
+            old_msg_id = old_msg_ids.get(webhook_url)
+            if old_msg_id:
+                delete_url = f"{webhook_url}/messages/{old_msg_id}"
+                requests.delete(delete_url, timeout=5)
+
+            # 2. Send the new message using ?wait=true so Discord returns the new message ID
+            send_url = f"{webhook_url}?wait=true"
+            res = requests.post(send_url, json=payload, timeout=5)
+            
+            if res.status_code in [200, 201]:
+                data = res.json()
+                new_msg_ids[webhook_url] = data.get("id")
+                print(f" Sent Discord alert to webhook for {showtime['date']} @ {showtime['time']}")
+            else:
+                print(f" Failed to post to webhook (HTTP {res.status_code})")
         except Exception as e:
             print(f" Failed to send to a webhook: {e}")
+
+    # 3. Save the new message IDs back to GitHub Variables for the next run
+    if new_msg_ids and gh_token and repo_name:
+        update_github_variable(repo_name, gh_token, "LAST_DISCORD_MSG_IDS", json.dumps(new_msg_ids))
 
 
 

@@ -26,4 +26,6 @@ jobs:
         env:
           DISCORD_WEBHOOKS: ${{ secrets.DISCORD_WEBHOOKS }}
           CINEPLEX_SUB_KEY: ${{ secrets.CINEPLEX_SUB_KEY }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python odyssey.py

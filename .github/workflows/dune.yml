@@ -1,8 +1,6 @@
 name: Dune 3 Ticket Monitor
 
 on:
-  schedule:
-    - cron: '*/10 * * * *' 
   workflow_dispatch:
 
 jobs:

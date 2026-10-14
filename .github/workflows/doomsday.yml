@@ -1,10 +1,10 @@
-name: Odyssey Ticket Monitor
+name: Doomsday Ticket Monitor
 
 on:
-  workflow_dispatch: # Required to let cron-job.org trigger it via the API
+  workflow_dispatch: # Allows cron-job.org to trigger it
 
 jobs:
-  check-odyssey:
+  check-doomsday:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -20,11 +20,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Odyssey Monitor
+      - name: Run Doomsday Monitor
         env:
           DISCORD_WEBHOOKS: ${{ secrets.DISCORD_WEBHOOKS }}
           CINEPLEX_SUB_KEY: ${{ secrets.CINEPLEX_SUB_KEY }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           LAST_DISCORD_MSG_IDS: ${{ vars.LAST_DISCORD_MSG_IDS }}
-        run: python odyssey.py
+        run: python doomsday.py
